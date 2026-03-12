@@ -28,9 +28,10 @@ pipeline {
             }
         }
 
-        // ─── 0-bootstrap ──────────────────────────────────────────────────────
+        // ─── APPLY STAGES ─────────────────────────────────────────────────────
 
         stage('Plan: 0-bootstrap') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/0-bootstrap && terraform init -input=false'
                 sh 'cd terraform/0-bootstrap && terraform plan -out tfplan'
@@ -39,6 +40,7 @@ pipeline {
         }
 
         stage('Approval: 0-bootstrap') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 script {
                     def plan = readFile 'terraform/0-bootstrap/tfplan.txt'
@@ -49,14 +51,14 @@ pipeline {
         }
 
         stage('Apply: 0-bootstrap') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/0-bootstrap && terraform apply -input=false tfplan'
             }
         }
 
-        // ─── 1-network ────────────────────────────────────────────────────────
-
         stage('Plan: 1-network') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/1-network && terraform init -input=false'
                 sh 'cd terraform/1-network && terraform plan -out tfplan'
@@ -65,6 +67,7 @@ pipeline {
         }
 
         stage('Approval: 1-network') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 script {
                     def plan = readFile 'terraform/1-network/tfplan.txt'
@@ -75,14 +78,14 @@ pipeline {
         }
 
         stage('Apply: 1-network') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/1-network && terraform apply -input=false tfplan'
             }
         }
 
-        // ─── 2-eks ────────────────────────────────────────────────────────────
-
         stage('Plan: 2-eks') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/2-eks && terraform init -input=false'
                 sh 'cd terraform/2-eks && terraform plan -out tfplan'
@@ -91,6 +94,7 @@ pipeline {
         }
 
         stage('Approval: 2-eks') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 script {
                     def plan = readFile 'terraform/2-eks/tfplan.txt'
@@ -101,8 +105,35 @@ pipeline {
         }
 
         stage('Apply: 2-eks') {
+            when { expression { params.terraformAction == 'apply' } }
             steps {
                 sh 'cd terraform/2-eks && terraform apply -input=false tfplan'
+            }
+        }
+
+        // ─── DESTROY STAGES (reverse order) ───────────────────────────────────
+
+        stage('Destroy: 2-eks') {
+            when { expression { params.terraformAction == 'destroy' } }
+            steps {
+                sh 'cd terraform/2-eks && terraform init -input=false'
+                sh 'cd terraform/2-eks && terraform destroy -auto-approve'
+            }
+        }
+
+        stage('Destroy: 1-network') {
+            when { expression { params.terraformAction == 'destroy' } }
+            steps {
+                sh 'cd terraform/1-network && terraform init -input=false'
+                sh 'cd terraform/1-network && terraform destroy -auto-approve'
+            }
+        }
+
+        stage('Destroy: 0-bootstrap') {
+            when { expression { params.terraformAction == 'destroy' } }
+            steps {
+                sh 'cd terraform/0-bootstrap && terraform init -input=false'
+                sh 'cd terraform/0-bootstrap && terraform destroy -auto-approve'
             }
         }
 
@@ -110,13 +141,10 @@ pipeline {
 
     post {
         success {
-            echo "Infrastructure deployed successfully."
+            echo "terraform ${params.terraformAction} completed successfully."
         }
         failure {
             echo "Pipeline failed. Check the stage logs above."
-        }
-        always {
-            cleanWs()
         }
     }
 }
