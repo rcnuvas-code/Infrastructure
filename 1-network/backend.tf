@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "quantamvector-infra-statefile-backup"
-    key            = "quantamvector/1-network/terraform.tfstate"
+    bucket         = "rcnuvas-infra-statefile-backup"
+    key            = "rcnuvas/1-network/terraform.tfstate"
     region         = "ap-northeast-1"
-    dynamodb_table = "quantamvector-terraform-locks"
+    dynamodb_table = "rcnuvas-terraform-locks"
     encrypt        = true
   }
 }
