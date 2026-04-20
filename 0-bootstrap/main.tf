@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "rcnuvas_bucket_1"
+  bucket = "rcnuvas_bucket-1"
 }
 
 resource "aws_s3_bucket_versioning" "tf_state" {
